@@ -3,11 +3,14 @@ import copy
 
 import rospy
 
+import threading
+
 from gps.agent.agent import Agent
 from gps.agent.agent_utils import generate_noise, setup
 from gps.agent.config import AGENT_ROS
 from gps.agent.ros.ros_utils import ServiceEmulator, msg_to_sample, \
         policy_to_msg
+from gps.agent.ros.img_processor import process_image
 from gps.proto.gps_pb2 import TRIAL_ARM, AUXILIARY_ARM
 from gps_agent_pkg.msg import TrialCommand, SampleResult, PositionCommand, \
         RelaxCommand, DataRequest
@@ -143,6 +146,11 @@ class AgentROS(Agent):
         noise = generate_noise(self.T, self.dU, self._hyperparams)
 
         # Execute trial.
+        if self._hyperparams["image_sensor"]:
+           exit_flag = threading.Event()
+           image_thread = threading.Thread(target=process_image, args=(self._hyperparams, network, exit_flag))
+           image_thread.start()
+
         trial_command = TrialCommand()
         trial_command.id = self._get_next_seq_id()
         trial_command.controller = policy_to_msg(policy, noise)
@@ -158,6 +166,10 @@ class AgentROS(Agent):
         sample_msg = self._trial_service.publish_and_wait(
             trial_command, timeout=self._hyperparams['trial_timeout']
         )
+
+        if self._hyperparams["image_sensor"]:
+           exit_flag.set()
+           image_thread.join()
 
         sample = msg_to_sample(sample_msg, self)
         if save:
