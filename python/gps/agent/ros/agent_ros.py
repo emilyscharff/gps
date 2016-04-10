@@ -10,7 +10,7 @@ from gps.agent.agent_utils import generate_noise, setup
 from gps.agent.config import AGENT_ROS
 from gps.agent.ros.ros_utils import ServiceEmulator, msg_to_sample, \
         policy_to_msg
-from gps.agent.ros.img_processor import process_image
+from gps.agent.ros.img_processor import Image_Processor
 from gps.proto.gps_pb2 import TRIAL_ARM, AUXILIARY_ARM
 from gps_agent_pkg.msg import TrialCommand, SampleResult, PositionCommand, \
         RelaxCommand, DataRequest
@@ -148,7 +148,8 @@ class AgentROS(Agent):
         # Execute trial.
         if self._hyperparams["image_sensor"]:
            exit_flag = threading.Event()
-           image_thread = threading.Thread(target=process_image, args=(self._hyperparams, network, exit_flag))
+           img_processor = Image_Processor(self._hyperparams, self.network, exit_flag)
+           image_thread = threading.Thread(target=img_processor.process_images())
            image_thread.start()
 
         trial_command = TrialCommand()

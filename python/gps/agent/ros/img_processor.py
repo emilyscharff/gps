@@ -3,22 +3,28 @@ import roslib
 from sensor_msgs.msg import Image
 from ddp_controller_pkg.msg import ImgFeatures
 
-def process_image(hyperparams, network, event):
-	global hyperparams = hyperparams
-	global network
-	rospy.init_node('img_processor', anonymous=True)
-  	rospy.Subscriber(hyperparams["subscribe_topic"], Image, process)
+class Image_Processor():
+    def __init__(self, hyperparams, network, event):
+        self._hyperparams = hyperparams
+        self._network = network
+        self._event = event
+        self.publisher = rospy.Publisher(self.hyperparams["publish_topic"], ImgFeatures)
 
-def process(image):
-	if event.isSet():
-  		rospy.signal_shutdown()
+    def process_images():
+        rospy.init_node('img_processor', anonymous=True)
+        rospy.Subscriber(self._hyperparams["subscribe_topic"], Image, process)
 
-	image_data = np.fromstring(image.data, np.uint8).reshape(image.height, image.width, 3)[::-1, :, ::-1]
-	image_data = image_data[hyperparams["vertical_crop"]:image.height - hyperparams["vertical_crop"],
-	                        hyperparams["horizontal_crop"]:image.height - hyperparams["horizontal_crop"]]
+    def process(image):
+    	if self._event.isSet():
+      	 rospy.signal_shutdown()
 
-    # Put data through the nueral network
-	features = network(image_data)
-	publisher = rospy.Publisher(hyperparams["publish_topic"], ImgFeatures)
-	pub.publish(features)
+        image_data = np.fromstring(image.data, np.uint8).reshape(image.height, image.width, 3)[::-1, :, ::-1]
+        image_data = image_data[self._hyperparams["vertical_crop"]:image.height - self._hyperparams["vertical_crop"],
+    	                        self._hyperparams["horizontal_crop"]:image.height - self._hyperparams["horizontal_crop"]]
+
+        # Put data through the nueral network
+        self._network.blobs[self.net.blobs.keys()[0]].data[:] = image_data
+        features = self._network.forward().values()[0][0]
+        features = self._network(image_data)
+        self.publisher.publish(features)
 
