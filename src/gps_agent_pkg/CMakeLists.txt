@@ -93,7 +93,7 @@ rosbuild_add_library(gps_agent_lib ${DDP_FILES})
 #rosbuild_add_executable(pointcloud_solver src/pointcloud_solver.cpp
 #                                          src/keypoint_detector.cpp)
 
-#rosbuild_add_executable(point_head src/point_head.cpp)
+rosbuild_add_executable(point_head src/point_head.cpp)
 #rosbuild_add_executable(torso src/torso.cpp)
 
 # Include Caffe in controller
